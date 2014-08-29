@@ -1,0 +1,1 @@
+In this file we are actually reading the database and dumping the FILTERED text in the database for TF-IDF calculation.
