@@ -1,10 +1,13 @@
 import java.sql.*;
 
+import javafx.scene.paint.Stop;
+import weka.core.Stopwords;
+
 /**
  * Created by mridul.v on 8/28/2014.
  */
 public class tfIdfAnalysis {
-    public static void analysisText(String text) throws ClassNotFoundException, SQLException {
+    public static void analysisText(String text,Stopwords stopwords) throws ClassNotFoundException, SQLException {
         String dbUrl = "jdbc:mysql://localhost/test";
         String dbClass = "com.mysql.jdbc.Driver";
         String username = "root";
@@ -33,13 +36,15 @@ public class tfIdfAnalysis {
                 rs.updateInt(index,val+1);
                 rs.updateRow();
             }
-            if (set == 0){
-                query = "REPLACE into term_frequency(keyword) VALUES (?)";
-                preparedStatement = connection.prepareStatement(query);
-                preparedStatement.setString(1, str);
-                preparedStatement.executeUpdate();
+            if (!stopwords.is(str)) {
+                if (set == 0) {
+                    query = "REPLACE into term_frequency(keyword) VALUES (?)";
+                    preparedStatement = connection.prepareStatement(query);
+                    preparedStatement.setString(1, str);
+                    preparedStatement.executeUpdate();
 
-                preparedStatement.close();
+                    preparedStatement.close();
+                }
             }
         }
 
@@ -51,12 +56,14 @@ public class tfIdfAnalysis {
         String username = "root";
         String password = "";
 
+        Stopwords stopwords = new Stopwords();
+
         Class.forName(dbClass);
         Connection connection = DriverManager.getConnection(dbUrl, username, password);
 
         // missing functionality:
         java.util.Date startDate = new java.util.Date();
-        String query = "SELECT * FROM analysis_tweets where lang LIKE 'en' ";
+        String query = "SELECT * FROM analysis_tweets";
 
         Statement stmt = connection.createStatement();
         stmt.setFetchSize(Integer.MIN_VALUE);
@@ -68,7 +75,7 @@ public class tfIdfAnalysis {
             if (count % 1000 == 0)
                 System.out.println(count);
 
-            analysisText(rs.getString("tweet").toLowerCase().replaceAll(" http.*?\\s", " ").replaceAll("[^\\w\\s\\,]","").replaceAll(","," ").replaceAll("http\\s*(\\w+)",""));
+              analysisText(rs.getString("tweet").toLowerCase().replaceAll(" http.*?\\s", " ").replaceAll("[^\\w\\s\\,]","").replaceAll(","," ").replaceAll("http\\s*(\\w+)",""),stopwords);
 //            if (count <= 10000)
 //                analysisText(rs.getString("tweet").toLowerCase().replaceAll(" http.*?\\s", " ").replaceAll("[^\\w\\s\\,]", "").replaceAll(",", " ").replaceAll("http\\s*(\\w+)", ""));
 //            else
