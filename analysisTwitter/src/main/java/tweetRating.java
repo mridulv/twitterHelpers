@@ -39,13 +39,20 @@ public class tweetRating {
 
         int count = 0 ;
         while(rs.next()){
-            long retweet = rs.getLong("retweet");
-            long fav = rs.getLong("favourites");
+            long reTweet = rs.getLong("retweet");
+            long id = rs.getLong("id");
 
-            double tweetRating = (retweet + (0.88490419729401604)*retweet + 132.30818861707201)/2;
+            double tweetRating = (reTweet + (0.88490419729401604)*reTweet + 132.30818861707201)/2;
+
+//            String queryAux = "SELECT * FROM analysis_tweets_new WHERE id = " + id;
+//            Statement stmtAux = connection2.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+//                    ResultSet.CONCUR_UPDATABLE);
+//            ResultSet rsAux = stmtAux.executeQuery(queryAux);
+//            rsAux.next();
 
             rs.updateFloat("rating",(float)tweetRating);
             rs.updateRow();
+
             count++;
             if (count % 10000 == 0)
                 System.out.println(count);

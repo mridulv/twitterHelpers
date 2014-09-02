@@ -31,7 +31,7 @@ public class userAnalysis {
 
         // missing functionality:
         Date startDate = new Date();
-        String query = "SELECT user_id,GROUP_CONCAT(tweet SEPARATOR ',') as final_tweet,count(*) as total FROM analysis_tweets_new GROUP BY user_id";
+        String query = "SELECT user_id,GROUP_CONCAT(tweet SEPARATOR ',') as final_tweet,AVG(rating) as avg_rating,count(*) as total FROM analysis_tweets_new GROUP BY user_id HAVING avg_rating > 100";
 
         Statement stmt = connection.createStatement();
         stmt.setFetchSize(Integer.MIN_VALUE);
@@ -39,9 +39,11 @@ public class userAnalysis {
 
         int count = 0 ;
         while(rs.next()){
-            String text = rs.getString("final_tweet").toLowerCase().replaceAll(" http.*?\\s", " ").replaceAll("[^\\w\\s\\,]","").replaceAll(","," ").replaceAll("http\\s*(\\w+)","");
+            String text = rs.getString("final_tweet").toLowerCase().replaceAll("@\\s*(\\w+)","").replaceAll(" http.*?\\s", " ").replaceAll("[^\\w\\s\\,]","").replaceAll(","," ").replaceAll("http\\s*(\\w+)","");
             int t = rs.getInt("total");
             long user_id = rs.getLong("user_id");
+            long rating = rs.getLong("avg_rating");
+
             String arr_text[] = text.split(",");
 
             PreparedStatement preparedStatement;
@@ -68,10 +70,11 @@ public class userAnalysis {
             String json = gson.toJson(sorted_map);
             System.out.println("json = " + json);
 
-            String insert = "INSERT into user_vector VALUES (?,?)";
+            String insert = "INSERT into user_vector VALUES (?,?,?)";
             preparedStatement = connection2.prepareStatement(insert);
             preparedStatement.setLong(1,user_id);
             preparedStatement.setString(2, json);
+            preparedStatement.setLong(3, rating);
             preparedStatement.executeUpdate();
 
         }

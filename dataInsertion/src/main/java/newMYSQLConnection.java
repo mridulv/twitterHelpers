@@ -35,7 +35,7 @@ public class newMYSQLConnection {
         System.out.println("this is here");
         int i = 0;
 
-        File folder = new File("C:\\Users\\mridul.v\\Downloads\\Twitter_Sentiment\\new_backend\\dump\\");
+        File folder = new File("C:\\Users\\mridul.v\\Downloads\\Twitter_Sentiment\\new_backend\\dump\\new_dump\\");
         File[] listOfFiles = folder.listFiles();
 
         //BufferedReader buffer = new BufferedReader(new FileReader("C:\\Users\\mridul.v\\Downloads\\Twitter_Sentiment\\backend\\FlumeData.1407786558156"));
@@ -53,7 +53,11 @@ public class newMYSQLConnection {
 
                 if (delimStr.length == 13) {
                     //System.out.println(file.getAbsoluteFile());
-                    String query = "REPLACE into new_tweets(key_val,id,timestamp,user_id,followers,mention_id,hashtag,retweet,favourites,lat_lng,place,lang,tweet) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+                    String query = "REPLACE into analysis_tweets_new(key_val,id,timestamp,user_id,followers,mention_id,hashtag,retweet,favourites,rating,lat_lng,place,lang,tweet) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+                    long reTweet = Long.valueOf(delimStr[7]);
+                    double tweetRating = (reTweet + (0.88490419729401604)*reTweet + 132.30818861707201)/2;
 
                     preparedStatement = connection.prepareStatement(query);
                     preparedStatement.setString(1, delimStr[0]);
@@ -65,10 +69,11 @@ public class newMYSQLConnection {
                     preparedStatement.setString(7, delimStr[6]);
                     preparedStatement.setString(8, delimStr[7]);
                     preparedStatement.setString(9, delimStr[8]);
-                    preparedStatement.setString(10, delimStr[9]);
-                    preparedStatement.setString(11, delimStr[10]);
-                    preparedStatement.setString(12, delimStr[11]);
-                    preparedStatement.setString(13, delimStr[12]);
+                    preparedStatement.setFloat(10 , (float)tweetRating);
+                    preparedStatement.setString(11, delimStr[9]);
+                    preparedStatement.setString(12, delimStr[10]);
+                    preparedStatement.setString(13, delimStr[11]);
+                    preparedStatement.setString(14, delimStr[12]);
     //                preparedStatement.setDouble(14, 0);
     //                preparedStatement.setString(15, "");
     //                preparedStatement.setString(16, "");

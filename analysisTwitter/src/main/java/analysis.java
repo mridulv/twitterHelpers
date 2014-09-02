@@ -57,27 +57,41 @@ public class analysis {
 
         Class.forName(dbClass);
         Connection connection = DriverManager.getConnection(dbUrl, username, password);
+        Connection connection2 = DriverManager.getConnection(dbUrl, username, password);
 
         // missing functionality:
         Date startDate = new Date();
-        String query = "SELECT * FROM new_tweets where lang LIKE 'en' ";
+        String query = "SELECT * FROM analysis_tweets";
 
         Statement stmt = connection.createStatement();
         stmt.setFetchSize(Integer.MIN_VALUE);
         ResultSet rs = stmt.executeQuery(query);
 
         int count=0;
+        PreparedStatement preparedStatement;
 
         while(rs.next()){
-            if (count % 1000 == 0)
-                System.out.println(count);
+            String queryAux = "REPLACE into analysis_tweets_new(key_val,id,timestamp,user_id,followers,mention_id,hashtag,retweet,favourites,rating,lat_lng,place,lang,tweet) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
-//            if (count <= 10000)
-//                analysisText(rs.getString("tweet").toLowerCase().replaceAll(" http.*?\\s", " ").replaceAll("[^\\w\\s\\,]", "").replaceAll(",", " ").replaceAll("http\\s*(\\w+)", ""));
-//            else
-//                break;
+            long reTweet = Long.valueOf(rs.getLong("retweet"));
+            double tweetRating = (reTweet + (0.88490419729401604)*reTweet + 132.30818861707201)/2;
 
-            count++;
+            preparedStatement = connection2.prepareStatement(queryAux);
+            preparedStatement.setString(1, rs.getString("key_val"));
+            preparedStatement.setLong(2, rs.getLong("id"));
+            preparedStatement.setString(3, rs.getString("timestamp"));
+            preparedStatement.setLong(4, rs.getLong("user_id"));
+            preparedStatement.setLong(5, rs.getLong("followers"));
+            preparedStatement.setString(6, rs.getString("mention_id"));
+            preparedStatement.setString(7, rs.getString("hashtag"));
+            preparedStatement.setLong(8, rs.getLong("retweet"));
+            preparedStatement.setLong(9, rs.getLong("favourites"));
+            preparedStatement.setFloat(10 , (float)tweetRating);
+            preparedStatement.setString(11, rs.getString("lat_lng"));
+            preparedStatement.setString(12, rs.getString("place"));
+            preparedStatement.setString(13, rs.getString("lang"));
+            preparedStatement.setString(14, rs.getString("tweet"));
+            preparedStatement.executeUpdate();
         }
 
 
