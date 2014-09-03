@@ -44,6 +44,8 @@ public class userAnalysis {
             long user_id = rs.getLong("user_id");
             long rating = rs.getLong("avg_rating");
 
+            rating = (long)(rating + (61.8149737505)*rating + 9972.69849548)/2;
+
             String arr_text[] = text.split(",");
 
             PreparedStatement preparedStatement;
