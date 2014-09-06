@@ -10,21 +10,24 @@ public class ranking {
         Class.forName(conn.dbClass);
         Connection connection = DriverManager.getConnection(conn.dbUrl, conn.username, conn.password);
 
-        String query = "SELECT * FROM analysis_tweets_new where key_val LIKE '1%'";
-        Statement stmt = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        long user_id = 12534;
+
+        String query = "SELECT mention_id,avg(rating) as total FROM analysis_tweets_new where key_val LIKE '1%' GROUP BY mention_id ORDER BY total DESC";
+        Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery(query);
         int count = 0;
-        while (rs.next()){
-            String text = rs.getString("tweet");
-            Matcher matcher = Pattern.compile("@\\s*(\\w+)").matcher(text);
-            if (matcher.find()) {
-                rs.updateString("mention_id",matcher.group(1));
-            }
-            rs.updateRow();
-            if (count % 1000 == 0)
-                System.out.println(count);
+        int rank = 0;
 
+        String user = "MLStadium";
+
+        System.out.println(count);
+        while (rs.next()){
             count++;
+            if (rs.getString("mention_id").equals(user)){
+                rank = count;
+            }
         }
+        System.out.println(rank);
+        System.out.println(count);
     }
 }
