@@ -30,7 +30,7 @@ public class tweetRating {
 
         // missing functionality:
         Date startDate = new Date();
-        String query = "SELECT * FROM analysis_tweets_new";
+        String query = "SELECT * FROM analysis_tweets";
 
         Statement stmt = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                 ResultSet.CONCUR_UPDATABLE);
