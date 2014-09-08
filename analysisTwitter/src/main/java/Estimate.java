@@ -1,12 +1,15 @@
 import javafx.scene.paint.Stop;
 import javafx.util.Pair;
+import opennlp.tools.postag.POSModel;
+import opennlp.tools.postag.POSTagger;
+import opennlp.tools.postag.POSTaggerME;
+import opennlp.tools.tokenize.Tokenizer;
+import opennlp.tools.tokenize.TokenizerME;
+import opennlp.tools.tokenize.TokenizerModel;
 import weka.core.Stopwords;
 
 import javax.xml.crypto.dom.DOMCryptoContext;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,23 +21,33 @@ import java.util.regex.Pattern;
  */
 public class Estimate {
 
-    public static double findRelation(String tweet ,Connection connection) throws SQLException {
+    public static double findRelation(String tweet ,Tokenizer tokenizer,POSTaggerME tagger , Connection connection) throws SQLException {
 
-        String arrText[] = tweet.toLowerCase().replaceAll("@\\p{L}+", "").replaceAll("#\\p{L}+", "").replaceAll(" http.*?\\s", " ").replaceAll("[^\\w\\s\\,]", "").replaceAll(",", " ").replaceAll("http\\s*(\\w+)", "").split(" ");
+        tweet = tweet.toLowerCase().replaceAll("@\\p{L}+","").replaceAll("#\\p{L}+", "").replaceAll("[^'\\w\\s\\,]", "").replaceAll("http\\s*(\\w+)", "");
+        String tokens[] = tokenizer.tokenize(tweet);
+        String arrText[] = tagger.tag(tokens);
+
         double score = 0;
         int count = 0;
-        for (String group : arrText) {
-            String query = "SELECT * FROM keywords where term = '"+group+"' and count_val > 1";
-            Statement stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery(query);
-            if (rs.next())
-            {
-                double newScore = rs.getDouble("value");
-                long val = rs.getLong("count_val");
+        int keyword_value = 0;
+        for (String match : arrText) {
+            Matcher matcher = Pattern.compile("N\\s*(\\w+)").matcher(match);
+            if (matcher.find()) {
+                String group = tokens[keyword_value];
+                System.out.println(tokens[keyword_value]);
+                String query = "SELECT * FROM keywords_new where term = '"+group+"' and count_val > 1";
+                Statement stmt = connection.createStatement();
+                ResultSet rs = stmt.executeQuery(query);
+                if (rs.next())
+                {
+                    double newScore = rs.getDouble("value");
+                    long val = rs.getLong("count_val");
 
-                score = score + newScore/(val-1);
+                    score = score + newScore/(val-1);
+                }
+                count++;
             }
-            count++;
+            keyword_value++;
         }
 
         if (count == 0)
@@ -95,9 +108,9 @@ public class Estimate {
             return score/count;
     }
 
-    public static Pair<Double,Pair<Double,Double>> getRetweetCount(Connection connection,String tweet) throws SQLException {
+    public static Pair<Double,Pair<Double,Double>> getRetweetCount(Connection connection,Tokenizer tokenizer,POSTaggerME tagger,String tweet) throws SQLException {
 
-        double val1 = findRelation(tweet.toLowerCase(),connection);
+        double val1 = findRelation(tweet.toLowerCase(),tokenizer,tagger,connection);
         double val2 = findRelation2(tweet.toLowerCase(),connection);
         double val3 = findRelation3(tweet.toLowerCase(),connection);
 
@@ -111,6 +124,14 @@ public class Estimate {
         Class.forName(conn.dbClass);
         Connection connection = DriverManager.getConnection(conn.dbUrl, conn.username, conn.password);
 
+        InputStream modelIn = new FileInputStream("C:\\Users\\mridul.v\\Downloads\\twitter_Project\\en-token.bin");
+        TokenizerModel model = new TokenizerModel(modelIn);
+        Tokenizer tokenizer = new TokenizerME(model);
+
+        InputStream modelIn2 = new FileInputStream("C:\\Users\\mridul.v\\Downloads\\twitter_Project\\en-pos-maxent.bin");
+        POSModel model2 = new POSModel(modelIn2);
+        POSTaggerME tagger = new POSTaggerME(model2);
+
         File file = new File("C:\\Users\\mridul.v\\Downloads\\twitter_Project\\data.csv");
         if (!file.exists()) {
             file.createNewFile();
@@ -118,9 +139,9 @@ public class Estimate {
         FileWriter fw = new FileWriter(file.getAbsoluteFile());
         BufferedWriter bw = new BufferedWriter(fw);
 
-        double arr[][] = new double[1600][4];
+        double arr[][] = new double[600][4];
 
-        String query = "SELECT * FROM final_analysis";
+        String query = "SELECT * FROM final_analysis where lang LIKE 'en'";
         //System.out.println(query);
         Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery(query);
@@ -132,7 +153,7 @@ public class Estimate {
             long user_id = rs.getLong("user_id");
             long id = rs.getLong("id");
 
-            Pair<Double,Pair<Double,Double>> pair = getRetweetCount(connection,tweet);
+            Pair<Double,Pair<Double,Double>> pair = getRetweetCount(connection,tokenizer,tagger,tweet);
 
             arr[count][0] = rs.getLong("followers");
             arr[count][1] = pair.getKey();
