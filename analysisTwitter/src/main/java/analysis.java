@@ -71,7 +71,7 @@ public class analysis {
         PreparedStatement preparedStatement;
 
         while(rs.next()){
-            String queryAux = "REPLACE into analysis_tweets_new(key_val,id,timestamp,user_id,followers,mention_id,hashtag,retweet,favourites,rating,lat_lng,place,lang,tweet) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            String queryAux = "REPLACE into analysis_tweets_new(key_val,id,timestamp,seconds,user_id,username,followers,mention_id,hashtag,retweet,favourites,rating,lat_lng,place,lang,tweet,sentiment,country,keywords,groups) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
             long reTweet = Long.valueOf(rs.getLong("retweet"));
             double tweetRating = (reTweet + (0.88490419729401604)*reTweet + 132.30818861707201)/2;
@@ -80,17 +80,23 @@ public class analysis {
             preparedStatement.setString(1, rs.getString("key_val"));
             preparedStatement.setLong(2, rs.getLong("id"));
             preparedStatement.setString(3, rs.getString("timestamp"));
-            preparedStatement.setLong(4, rs.getLong("user_id"));
-            preparedStatement.setLong(5, rs.getLong("followers"));
-            preparedStatement.setString(6, rs.getString("mention_id"));
-            preparedStatement.setString(7, rs.getString("hashtag"));
-            preparedStatement.setLong(8, rs.getLong("retweet"));
-            preparedStatement.setLong(9, rs.getLong("favourites"));
-            preparedStatement.setFloat(10 , (float)tweetRating);
-            preparedStatement.setString(11, rs.getString("lat_lng"));
-            preparedStatement.setString(12, rs.getString("place"));
-            preparedStatement.setString(13, rs.getString("lang"));
-            preparedStatement.setString(14, rs.getString("tweet"));
+            preparedStatement.setLong(4, rs.getLong("seconds"));
+            preparedStatement.setLong(5, rs.getLong("user_id"));
+            preparedStatement.setString(6, rs.getString("username"));
+            preparedStatement.setLong(7, rs.getLong("followers"));
+            preparedStatement.setString(8, rs.getString("mention_id"));
+            preparedStatement.setString(9, rs.getString("hashtag"));
+            preparedStatement.setLong(10, rs.getLong("retweet"));
+            preparedStatement.setLong(11, rs.getLong("favourites"));
+            preparedStatement.setFloat(12 , (float)tweetRating);
+            preparedStatement.setString(13, rs.getString("lat_lng"));
+            preparedStatement.setString(14, rs.getString("place"));
+            preparedStatement.setString(15, rs.getString("lang"));
+            preparedStatement.setString(16, rs.getString("tweet"));
+            preparedStatement.setDouble(17, rs.getDouble("sentiment"));
+            preparedStatement.setString(18, rs.getString("country"));
+            preparedStatement.setString(19, rs.getString("keywords"));
+            preparedStatement.setString(20, rs.getString("groups"));
             preparedStatement.executeUpdate();
         }
 

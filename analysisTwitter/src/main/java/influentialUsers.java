@@ -33,7 +33,7 @@ public class influentialUsers {
         helper2 bvc = new helper2(hashMap);
         TreeMap<Long, Long> sorted_map = new TreeMap<Long, Long>(bvc);
 
-        String entity = "783214";
+        String entity = "74286565";
 
         String query = "SELECT count(*) as total, avg(rating) as rating_avg, followers , user_id from analysis_tweets_new where key_val LIKE '1"+entity+"%' GROUP BY user_id";
         System.out.println(query);

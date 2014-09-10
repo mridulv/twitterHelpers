@@ -16,16 +16,10 @@ import java.util.Date;
 public class correlation {
     public static TreeMap callFunc(String entity_id) throws SQLException, ClassNotFoundException, IOException, URISyntaxException, UnirestException, JSONException {
 
-        String dbUrl = "jdbc:mysql://localhost/test";
-        String dbClass = "com.mysql.jdbc.Driver";
-        String username = "root";
-        String password = "";
-
         Stopwords stopwords = new Stopwords();
 
-        Class.forName(dbClass);
-        Connection connection = DriverManager.getConnection(dbUrl, username, password);
-        Connection connection2 = DriverManager.getConnection(dbUrl, username, password);
+        Class.forName(conn.dbClass);
+        Connection connection = DriverManager.getConnection(conn.dbUrl, conn.username, conn.password);
 
         // missing functionality:
         String query = "SELECT * from analysis_tweets_new WHERE key_val LIKE '1"+entity_id+"%'";
@@ -64,18 +58,9 @@ public class correlation {
 
     public static void main(String args[]) throws SQLException, ClassNotFoundException, IOException, URISyntaxException, UnirestException, JSONException {
 
-        String dbUrl = "jdbc:mysql://localhost/test";
-        String dbClass = "com.mysql.jdbc.Driver";
-        String username = "root";
-        String password = "";
+        Class.forName(conn.dbClass);
+        Connection connection2 = DriverManager.getConnection(conn.dbUrl, conn.username, conn.password);
 
-        Stopwords stopwords = new Stopwords();
-
-        Class.forName(dbClass);
-        Connection connection = DriverManager.getConnection(dbUrl, username, password);
-        Connection connection2 = DriverManager.getConnection(dbUrl, username, password);
-
-        // missing functionality:
         Date startDate = new Date();
 
         Map<Long,Long> hashMap = new HashMap<Long, Long>();
