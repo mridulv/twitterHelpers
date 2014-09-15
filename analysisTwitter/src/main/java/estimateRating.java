@@ -31,8 +31,8 @@ public class estimateRating {
         POSModel model2 = new POSModel(modelIn2);
         POSTaggerME tagger = new POSTaggerME(model2);
 
-        String entity = "zaynmalik";
-        String text = "Good old number 11 never fails me :)";
+        String entity = "justinbieber";
+        String text = "Watch @FloydMayweather fight on Showtime PPV tomorrow night for #Mayhem.";
 
         Estimate estimate = new Estimate();
         Pair<Double, Pair<Double, Double>> pairPair = estimate.getRetweetCount(connection,tokenizer,tagger , text);
