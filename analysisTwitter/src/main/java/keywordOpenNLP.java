@@ -26,6 +26,12 @@ import java.util.regex.Pattern;
  * Created by mridul.v on 9/7/2014.
  */
 public class keywordOpenNLP {
+    public static String removeURLS(String text)
+    {
+        String regexp = "\\(?\\bhttps?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]";
+        text = text.replaceAll(regexp,"");
+        return text;
+    }
     public static void main(String args[]) throws IOException, ClassNotFoundException, SQLException {
         Class.forName(conn.dbClass);
         Connection connection = DriverManager.getConnection(conn.dbUrl, conn.username, conn.password);
@@ -38,7 +44,7 @@ public class keywordOpenNLP {
         POSModel model2 = new POSModel(modelIn2);
         POSTaggerME tagger = new POSTaggerME(model2);
 
-        String query = "SELECT * FROM analysis_tweets_new WHERE lang LIKE 'en' ";
+        String query = "SELECT * FROM final_tweet_analysis WHERE lang LIKE 'en' ";
         Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery(query);
         Map<String, Double> hashMap = new HashMap<String, Double>();
@@ -53,7 +59,7 @@ public class keywordOpenNLP {
             double rating = rs.getLong("rating");
 
             int keyword_value = 0;
-            text = text.toLowerCase().replaceAll("@\\p{L}+","").replaceAll("#\\p{L}+", "").replaceAll("[^'\\w\\s\\,]", "").replaceAll("http\\s*(\\w+)", "");
+            text = removeURLS(text.toLowerCase()).replaceAll("@\\p{L}+","").replaceAll("#\\p{L}+", "").replaceAll("[^\\w\\s\\,]", " ");
             String tokens[] = tokenizer.tokenize(text);
             String arrText[] = tagger.tag(tokens);
 
@@ -61,17 +67,19 @@ public class keywordOpenNLP {
                 Matcher matcher = Pattern.compile("N\\s*(\\w+)").matcher(match);
                 if (matcher.find()){
                     String group = tokens[keyword_value];
-                    if (hashMap.containsKey(group)) {
-                        double value = hashMap.get(group);
-                        int total = hashCount.get(group);
-                        value = value + rating;
+                    if ((!stopwords.is(group)) && group.length() > 2) {
+                        if (hashMap.containsKey(group)) {
+                            double value = hashMap.get(group);
+                            int total = hashCount.get(group);
+                            value = value + rating;
 
-                        hashCount.put(group, total + 1);
-                        hashMap.put(group, value);
-                    } else {
-                        double value = rating;
-                        hashMap.put(group, value);
-                        hashCount.put(group, 1);
+                            hashCount.put(group, total + 1);
+                            hashMap.put(group, value);
+                        } else {
+                            double value = rating;
+                            hashMap.put(group, value);
+                            hashCount.put(group, 1);
+                        }
                     }
                 }
                 keyword_value++;

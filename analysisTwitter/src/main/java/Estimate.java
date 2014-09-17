@@ -21,11 +21,19 @@ import java.util.regex.Pattern;
  */
 public class Estimate {
 
+    public static String removeURLS(String text)
+    {
+        String regexp = "\\(?\\bhttps?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]";
+        text = text.replaceAll(regexp,"");
+        return text;
+    }
     public static double findRelation(String tweet ,Tokenizer tokenizer,POSTaggerME tagger , Connection connection) throws SQLException {
 
-        tweet = tweet.toLowerCase().replaceAll("@\\p{L}+","").replaceAll("#\\p{L}+", "").replaceAll("'\\p{L}+", " ").replaceAll("[^\\w\\s\\,]", "").replaceAll("http\\s*(\\w+)", "");
+        tweet = removeURLS(tweet.toLowerCase()).replaceAll("@\\p{L}+","").replaceAll("#\\p{L}+", "").replaceAll("[^\\w\\s\\,]", " ");
         String tokens[] = tokenizer.tokenize(tweet);
         String arrText[] = tagger.tag(tokens);
+
+        Stopwords stopwords = new Stopwords();
 
         double score = 0;
         int count = 0;
@@ -34,18 +42,19 @@ public class Estimate {
             Matcher matcher = Pattern.compile("N\\s*(\\w+)").matcher(match);
             if (matcher.find()) {
                 String group = tokens[keyword_value];
-                String query = "SELECT * FROM keywords_new where term = '"+group+"' and count_val > 1";
-                Statement stmt = connection.createStatement();
-                ResultSet rs = stmt.executeQuery(query);
-                if (rs.next())
-                {
-                    double newScore = rs.getDouble("value");
-                    long val = rs.getLong("count_val");
+                if ((!stopwords.is(group)) && group.length() > 2) {
+                    String query = "SELECT * FROM keywords_new where term = '"+group+"' and count_val > 1";
+                    Statement stmt = connection.createStatement();
+                    ResultSet rs = stmt.executeQuery(query);
+                    if (rs.next())
+                    {
+                        double newScore = rs.getDouble("value");
+                        long val = rs.getLong("count_val");
 
-                    score = score + newScore/(val-1);
+                        score = score + newScore/(val-1);
+                    }
+                    count++;
                 }
-                rs.close();
-                count++;
             }
             keyword_value++;
         }
@@ -72,7 +81,6 @@ public class Estimate {
 
                 score = score + newScore/(val-1);
             }
-            rs.close();
             count++;
         }
 
@@ -99,7 +107,6 @@ public class Estimate {
 
                 score = score + newScore/(val-1);
             }
-            rs.close();
             count++;
         }
 
@@ -133,16 +140,14 @@ public class Estimate {
         POSModel model2 = new POSModel(modelIn2);
         POSTaggerME tagger = new POSTaggerME(model2);
 
-        File file = new File("C:\\Users\\mridul.v\\Downloads\\twitter_Project\\rating_deviation.csv");
+        File file = new File("C:\\Users\\mridul.v\\Downloads\\twitter_Project\\data_change.csv");
         if (!file.exists()) {
             file.createNewFile();
         }
         FileWriter fw = new FileWriter(file.getAbsoluteFile());
         BufferedWriter bw = new BufferedWriter(fw);
 
-        double arr[][] = new double[600][4];
-
-        String query = "SELECT * FROM analysis_tweets_new where lang LIKE 'en' and tweet LIKE '%#%' and tweet LIKE '%@%'";
+        String query = "SELECT * FROM final_tweet_analysis GROUP BY id";
         Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery(query);
 
@@ -157,7 +162,7 @@ public class Estimate {
             rs2.next();
 
             double rating_avg = rs2.getDouble("rating");
-            if (rs2.getInt("total") > 1) {
+            if (rs2.getInt("total") > 5) {
 
                 if (count % 1000 == 0)
                     System.out.println(count);
@@ -166,19 +171,21 @@ public class Estimate {
 
                 Pair<Double, Pair<Double, Double>> pair = getRetweetCount(connection, tokenizer, tagger, tweet);
 
-                bw.write(String.valueOf(rs.getLong("followers")));
-                bw.write(",");
-                bw.write(String.valueOf((pair.getKey())));
-                bw.write(",");
-                bw.write(String.valueOf((pair.getValue().getKey())));
-                bw.write(",");
-                bw.write(String.valueOf((pair.getValue().getValue())));
-                bw.write(",");
-                bw.write(String.valueOf(((rs.getDouble("rating") - rating_avg)/rs.getDouble("rating"))*100));
-                bw.write("\n");
-
+                if ((Math.abs(rs.getDouble("rating") - rating_avg) != 0)){
+                    bw.write(String.valueOf(rs.getLong("followers")));
+                    bw.write(",");
+                    bw.write(String.valueOf((pair.getKey())));
+                    bw.write(",");
+                    bw.write(String.valueOf((pair.getValue().getKey())));
+                    bw.write(",");
+                    bw.write(String.valueOf((pair.getValue().getValue())));
+                    bw.write(",");
+                    bw.write(String.valueOf((Math.abs(rs.getDouble("rating") - rating_avg)/rs.getDouble("rating"))*100));
+                    bw.write("\n");
+                }
                 count++;
             }
+            rs2.close();
             stmt2.close();
         }
         stmt.close();

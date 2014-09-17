@@ -36,7 +36,7 @@ public class estimateRatingNorm {
         FileWriter fw = new FileWriter(file.getAbsoluteFile());
         BufferedWriter bw = new BufferedWriter(fw);
 
-        String query = "SELECT * FROM analysis_tweets_new where lang LIKE 'en' and tweet NOT LIKE '%@%'";
+        String query = "SELECT * FROM final_tweet_analysis where lang LIKE 'en' ";
         Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery(query);
 
@@ -65,10 +65,10 @@ public class estimateRatingNorm {
                 Estimate estimate = new Estimate();
                 Pair<Double, Pair<Double, Double>> pairPair = estimate.getRetweetCount(connection, tokenizer, tagger, text);
 
-                double c1 = 1.27037327e-05;
-                double c2 = -1.80483354e-03;
-                double c3 = -1.60152027e-03;
-                double c4 = -1.01518616e-02;
+                double c1 = -3.32185595e-06;
+                double c2 = -1.17079629e-03;
+                double c3 =  3.08005051e-03;
+                double c4 =  1.88577386e-03;
 
                 double estimateRating = c1 * followers + c2 * pairPair.getKey() + c3 * pairPair.getValue().getKey() + c4 * pairPair.getValue().getValue();
 
@@ -77,7 +77,7 @@ public class estimateRatingNorm {
                 bw.write(String.valueOf(rating));
                 bw.write("\n");
 
-                double true_rating = rating_avg;
+                double true_rating = rating_avg*(1+(estimateRating/100));
                 if (Math.abs(true_rating - rating) > 0.2 * (rating))
                     count2++;
                 count++;

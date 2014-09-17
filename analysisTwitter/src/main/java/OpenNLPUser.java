@@ -25,6 +25,12 @@ import java.util.regex.Pattern;
  * Created by mridul.v on 9/10/2014.
  */
 public class OpenNLPUser {
+    public static String removeURLS(String text)
+    {
+        String regexp = "\\(?\\bhttps?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]";
+        text = text.replaceAll(regexp,"");
+        return text;
+    }
     public static void main(String args[]) throws SQLException, ClassNotFoundException, IOException, URISyntaxException, UnirestException, JSONException {
 
         InputStream modelIn = new FileInputStream("C:\\Users\\mridul.v\\Downloads\\twitter_Project\\en-token.bin");
@@ -44,7 +50,7 @@ public class OpenNLPUser {
 
         // missing functionality:
         Date startDate = new Date();
-        String query = "SELECT user_id,GROUP_CONCAT(tweet SEPARATOR ',') as final_tweet,AVG(rating) as avg_rating,count(*) as total FROM analysis_tweets_new GROUP BY user_id HAVING avg_rating > 1000";
+        String query = "SELECT username,user_id,GROUP_CONCAT(tweet SEPARATOR ',') as final_tweet,AVG(rating) as avg_rating,count(*) as total FROM final_tweet_analysis GROUP BY user_id HAVING avg_rating > 500";
 
         Statement stmt = connection.createStatement();
         stmt.setFetchSize(Integer.MIN_VALUE);
@@ -56,6 +62,7 @@ public class OpenNLPUser {
             int t = rs.getInt("total");
             long user_id = rs.getLong("user_id");
             long rating = rs.getLong("avg_rating");
+            String username = rs.getString("username");
 
             rating = (long)(rating + (61.8149737505)*rating + 9972.69849548)/2;
 
@@ -69,7 +76,7 @@ public class OpenNLPUser {
 
             for (String arr: arr_text){
                 int keyword_value = 0;
-                arr = arr.toLowerCase().replaceAll("@\\p{L}+","").replaceAll("#\\p{L}+", "").replaceAll("[^'\\w\\s\\,]", "").replaceAll("'\\p{L}+"," ").replaceAll("'"," ").replaceAll("http\\s*(\\w+)", "");
+                arr = removeURLS(arr.toLowerCase()).replaceAll("@\\p{L}+","").replaceAll("#\\p{L}+", "").replaceAll("[^\\w\\s\\,]", " ");
                 String tokens[] = tokenizer.tokenize(arr);
                 String arrText[] = tagger.tag(tokens);
 
@@ -77,13 +84,15 @@ public class OpenNLPUser {
                     Matcher matcher = Pattern.compile("N\\s*(\\w+)").matcher(match);
                     if (matcher.find()){
                         String group = tokens[keyword_value];
-                        if (hashMap.containsKey(group)) {
-                            double value = hashMap.get(group);
-                            value = value + rating;
-                            hashMap.put(group, value);
-                        } else {
-                            double value = rating;
-                            hashMap.put(group, value);
+                        if ((!stopwords.is(group)) && group.length() > 2) {
+                            if (hashMap.containsKey(group)) {
+                                double value = hashMap.get(group);
+                                value = value + rating;
+                                hashMap.put(group, value);
+                            } else {
+                                double value = rating;
+                                hashMap.put(group, value);
+                            }
                         }
                     }
                     keyword_value++;
@@ -111,11 +120,12 @@ public class OpenNLPUser {
             String json = gson.toJson(sorted_map);
             System.out.println("json = " + json);
 
-            String insert = "REPLACE into user_vector(user_id,keyword_vector,rating) VALUES (?,?,?)";
+            String insert = "REPLACE into user_vector(username,user_id,keyword_vector,rating) VALUES (?,?,?,?)";
             preparedStatement = connection2.prepareStatement(insert);
-            preparedStatement.setLong(1,user_id);
-            preparedStatement.setString(2, json);
-            preparedStatement.setLong(3, rating);
+            preparedStatement.setString(1,username);
+            preparedStatement.setLong(2,user_id);
+            preparedStatement.setString(3, json);
+            preparedStatement.setLong(4, rating);
             preparedStatement.executeUpdate();
             count++;
             System.out.println(count);

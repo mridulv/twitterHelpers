@@ -10,7 +10,7 @@ from sklearn import linear_model
 
 clf = linear_model.LinearRegression()
 
-reader=csv.reader(open("rating_deviation.csv","rb"),delimiter=',')
+reader=csv.reader(open("data_change.csv","rb"),delimiter=',')
 x=list(reader)
 result=numpy.array(x).astype('float')
 
